@@ -1,15 +1,15 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
     buildToolsVersion "30.0.2"
 
     defaultConfig {
         applicationId "biz.binarysolutions.signature.share"
-        minSdkVersion 21
-        targetSdkVersion 29
-        versionCode 20
-        versionName "3.0.1"
+        minSdkVersion 30
+        targetSdkVersion 30
+        versionCode 21
+        versionName "4.0.0"
     }
 
     buildTypes {
