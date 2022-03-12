@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE resources [
+    <!ENTITY packagename "biz.binarysolutions.signature">
+]>
+<resources>
+    <string name="package_name">&packagename;</string>
+    <string name="library_url">market://details?id=&packagename;</string>
+    <string name="app_fileprovider">biz.binarysolutions.signature.share.fileprovider</string>
+</resources>
