@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Signature Share</string>
-    <string name="app_folder">Signature_Share</string>
+    <string name="app_folder">signatures</string>
     
     <string name="Error">Error</string>
     

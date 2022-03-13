@@ -7,9 +7,9 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
@@ -27,110 +27,119 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.ListView;
 
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.FileProvider;
 
 import java.io.File;
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 
 import biz.binarysolutions.signature.share.tasks.ReadCapturedFilesTask;
 import biz.binarysolutions.signature.share.util.FileUtil;
 import biz.binarysolutions.signature.share.util.PNGFile;
-import biz.binarysolutions.signature.share.util.PermissionActivity;
 import biz.binarysolutions.signature.share.util.PreferencesHandler;
 
 /**
- * 
+ *
  *
  */
-public class MainActivity extends PermissionActivity
+public class MainActivity extends AppCompatActivity
 	implements ReadCapturedFilesTask.Callback {
 
 	private static final int CAPTURE_REQUEST_CODE = 0;
-	
+
 	private String  signaturesFolder = null;
-	private boolean canAccessStorage = false;
-	
+	private String  fileName         = null;
+
 	private final ArrayList<File>    files = new ArrayList<>();
 	private 	  ArrayAdapter<File> adapter;
-	
+
 	private PreferencesHandler preferencesHandler;
 
 	/**
-	 * 
+	 *
 	 * @return
 	 */
 	private boolean shouldDisplayWarningDialog() {
 		return preferencesHandler.getShowWarning();
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @return
 	 */
 	private boolean isCaptureLibraryInstalled() {
-	
-	    PackageManager pm = getPackageManager();
-	    PackageInfo    pi = null;
-	    
+
+	    PackageManager pm          = getPackageManager();
+	    String         packageName = getString(R.string.package_name);
+		PackageInfo    pi          = null;
+
 	    try {
-			pi = pm.getPackageInfo(getString(R.string.package_name), 0);
+			pi = pm.getPackageInfo(packageName, 0);
 		} catch (NameNotFoundException e) {
 			// do nothing
 		}
-		
+
 		return pi != null;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param errorMessage
 	 */
 	private void displayErrorMessage(String errorMessage) {
-		
+
 		if (isFinishing()) {
 			return;
 		}
-		
+
 		new AlertDialog.Builder(this)
 			.setIcon(android.R.drawable.ic_dialog_alert)
 			.setTitle(R.string.Error)
 			.setMessage(errorMessage)
 			.setPositiveButton(android.R.string.ok, null)
-			.show();		
+			.show();
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	private void installLibrary() {
-		
+
 		Uri    uri    = Uri.parse(getString(R.string.library_url));
 		Intent intent = new Intent(Intent.ACTION_VIEW, uri);
 
 		startActivity(intent);
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	private void displayInstallLibraryDialog() {
-		
+
 		if (isFinishing()) {
 			return;
 		}
-		
-		DialogInterface.OnClickListener listener = 
+
+		DialogInterface.OnClickListener listener =
 			new DialogInterface.OnClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				installLibrary();
 			}
 		};
-		
+
 		new AlertDialog.Builder(this)
 			.setTitle(R.string.LibraryMissing)
 			.setMessage(R.string.LibraryMissingMessage)
@@ -138,31 +147,31 @@ public class MainActivity extends PermissionActivity
 			.setNegativeButton(android.R.string.cancel, null)
 			.show();
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param file
 	 */
 	private void displayRenameFileDialog(final File file) {
-		
+
 		LayoutInflater inflater = getLayoutInflater();
 		View view = inflater.inflate(R.layout.dialog_rename, null);
-		
+
 		final EditText editText = view.findViewById(R.id.EditTextFileName);
-		final String   fileName = FileUtil.stripExtension(file.getName()); 
+		final String   fileName = FileUtil.stripExtension(file.getName());
 		editText.setText(fileName);
-		
-		
+
+
 		if (isFinishing()) {
 			return;
 		}
-		
-		DialogInterface.OnClickListener listener = 
+
+		DialogInterface.OnClickListener listener =
 			new DialogInterface.OnClickListener() {
-			
+
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
-				
+
 				String newFileName = editText.getText().toString();
 				if (!newFileName.equals(fileName) && newFileName.length() > 0) {
 
@@ -181,7 +190,7 @@ public class MainActivity extends PermissionActivity
 				}
 			}
 		};
-		
+
 		new AlertDialog.Builder(this)
 			.setTitle(R.string.Rename)
 			.setView(view)
@@ -191,14 +200,14 @@ public class MainActivity extends PermissionActivity
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	private void displayErrorDialog() {
-		
+
 		if (isFinishing()) {
 			return;
 		}
-	
+
 		new AlertDialog.Builder(this)
 			.setIcon(android.R.drawable.ic_dialog_alert)
 			.setTitle(R.string.Error)
@@ -208,18 +217,18 @@ public class MainActivity extends PermissionActivity
 	}
 
 	/**
-	 * @param id 
-	 * 
+	 * @param id
+	 *
 	 */
 	private void displayWarningDialog(final long id) {
-		
+
 		if (isFinishing()) {
 			return;
 		}
-		
+
 		LayoutInflater inflater = getLayoutInflater();
 		View view = inflater.inflate(R.layout.dialog_warning, null);
-		
+
 		CheckBox checkBox = view.findViewById(R.id.checkBoxShowWarning);
 		checkBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 
@@ -228,43 +237,39 @@ public class MainActivity extends PermissionActivity
 				preferencesHandler.setShowWarning(!isChecked);
 			}
 		});
-		
-		DialogInterface.OnClickListener listener = 
+
+		DialogInterface.OnClickListener listener =
 			new DialogInterface.OnClickListener() {
 
 				@Override
 				public void onClick(DialogInterface arg0, int arg1) {
 					viewFile(id);
 				}
-			
+
 		};
-		
+
 		new AlertDialog.Builder(this)
 			.setIcon(android.R.drawable.ic_dialog_alert)
 			.setTitle(android.R.string.dialog_alert_title)
 			.setView(view)
 			.setPositiveButton(android.R.string.ok, listener)
 			.setNegativeButton(android.R.string.cancel, null)
-			.show();		
+			.show();
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	private String getSignaturesFolder() {
-		
-		String folderName = getString(R.string.app_folder);
-		
-		File externalStorage = Environment.getExternalStorageDirectory();
-		if (externalStorage != null) {
-			return FileUtil.getFullPath(externalStorage, folderName);
-		} else {
-			return null;
-		}
+
+		String folder  = getString(R.string.app_folder);
+		File   storage = getFilesDir();
+
+		return new File(storage, folder).getAbsolutePath();
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	private String getFileName() {
 
@@ -282,23 +287,23 @@ public class MainActivity extends PermissionActivity
 			c.get(Calendar.MILLISECOND)
 		);
 
-        return signaturesFolder + File.separator + fileName + ".png";
+        return fileName + ".png";
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	private void setButtonListener() {
-		
+
 		Button button = findViewById(R.id.ButtonCaptureNewSignature);
 		button.setOnClickListener(new OnClickListener() {
 
 			@Override
 			public void onClick(View view) {
-				
-				Intent intent = 
+
+				Intent intent =
 		        	new Intent("biz.binarysolutions.signature.CAPTURE");
-				
+
 				String keyCode        = "biz.binarysolutions.signature.ActivationCode";
 				String keyFileName    = "biz.binarysolutions.signature.FileName";
 				String keyTitle       = "biz.binarysolutions.signature.Title";
@@ -307,25 +312,25 @@ public class MainActivity extends PermissionActivity
 				String keyCrop        = "biz.binarysolutions.signature.Crop";
 				String keyWidth       = "biz.binarysolutions.signature.Width";
 				String keyHeight      = "biz.binarysolutions.signature.Height";
-				String keyBackgroundColor = 
+				String keyBackgroundColor =
 					"biz.binarysolutions.signature.BackgroundColor";
-				String keyBackgroundImage = 
+				String keyBackgroundImage =
 					"biz.binarysolutions.signature.BackgroundImage";
-				
-				String fileName = getFileName();
-				
-				String  title       = preferencesHandler.getTitle(); 
+
+				fileName = getFileName();
+
+				String  title       = preferencesHandler.getTitle();
 				int     strokeWidth = preferencesHandler.getStrokeWidth();
 				String  strokeColor = preferencesHandler.getStrokeColor();
 				boolean crop        = preferencesHandler.getCrop();
 				String  width       = preferencesHandler.getWidth();
 				String  height      = preferencesHandler.getHeight();
-				String  backgroundColor = 
+				String  backgroundColor =
 					preferencesHandler.getBackgroundColor();
-				String  backgroundImage = 
+				String  backgroundImage =
 					preferencesHandler.getBackgroundImage();
-				
-				
+
+
 		        intent.putExtra(keyCode, "");
 		        intent.putExtra(keyFileName, fileName);
 		        intent.putExtra(keyTitle, title);
@@ -336,14 +341,14 @@ public class MainActivity extends PermissionActivity
 		        intent.putExtra(keyHeight, height);
 		        intent.putExtra(keyBackgroundColor, backgroundColor);
 		        intent.putExtra(keyBackgroundImage, backgroundImage);
-		        
+
 		        intent.setComponent(
 		    		new ComponentName(
-						"biz.binarysolutions.signature", 
+						"biz.binarysolutions.signature",
 						"biz.binarysolutions.signature.Capture"
 					)
 		    	);
-		        
+
 		        if (isCaptureLibraryInstalled()) {
 		        	startActivityForResult(intent, CAPTURE_REQUEST_CODE);
 				} else {
@@ -352,21 +357,21 @@ public class MainActivity extends PermissionActivity
 			}
 		});
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	private void readCapturedFiles() {
 
-		if (!canAccessStorage || signaturesFolder == null) {
+		if (signaturesFolder == null) {
 			return;
 		}
 
 		new ReadCapturedFilesTask(this).execute(signaturesFolder);
 	}
-	
+
     /**
-	 * 
+	 *
 	 * @param readFiles
 	 */
 	private void populateListView(File[] readFiles) {
@@ -377,7 +382,7 @@ public class MainActivity extends PermissionActivity
 		}
 
 		Collections.sort(files);
-		
+
 		adapter.notifyDataSetChanged();
 	}
 
@@ -392,56 +397,81 @@ public class MainActivity extends PermissionActivity
 	}
 
 	/**
-	 * @param id 
-	 * 
+	 * @param uri
+	 * @param chooser
+	 * @param permission
+	 */
+	private void grantToAll
+		(
+			Uri    uri,
+			Intent chooser,
+			int    permission
+		) {
+
+		List<ResolveInfo> infoList = getPackageManager()
+			.queryIntentActivities(chooser, PackageManager.MATCH_DEFAULT_ONLY);
+
+		for (ResolveInfo info : infoList) {
+
+			String packageName = info.activityInfo.packageName;
+			grantUriPermission(packageName, uri, permission);
+		}
+	}
+
+	/**
+	 * @param id
+	 *
 	 */
 	private void viewFile(long id) {
-		
-		String title  = getString(R.string.View);
+
+		Uri uri = getUri(files.get((int) id));
+
 		Intent intent = new Intent(Intent.ACTION_VIEW);
-        Uri    uri    = getUri(files.get((int) id));
-        
-        intent.setDataAndType(uri, "image/png");
-		intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        
-        startActivity(Intent.createChooser(intent, title));
+		intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+		intent.setDataAndType(uri, "image/png");
+
+		String title  = getString(R.string.View);
+		startActivity(Intent.createChooser(intent, title));
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	private void shareFile(long id) {
-		
-		String title  = getString(R.string.Share);
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        Uri    uri    = getUri(files.get((int) id));
-        
-        intent.setType("image/png");
-        intent.putExtra(Intent.EXTRA_STREAM, uri);
-		intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        
-        startActivity(Intent.createChooser(intent, title));		
+
+		int permission = Intent.FLAG_GRANT_READ_URI_PERMISSION;
+		Uri uri        = getUri(files.get((int) id));
+
+		Intent intent = new Intent(Intent.ACTION_SEND);
+		intent.setType("image/png");
+		intent.putExtra(Intent.EXTRA_STREAM, uri);
+		intent.setFlags(permission);
+
+		String title   = getString(R.string.Share);
+		Intent chooser = Intent.createChooser(intent, title);
+		grantToAll(uri, chooser, permission);
+
+		startActivity(chooser);
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param id
 	 */
 	private void renameFile(long id) {
-		
 		displayRenameFileDialog(files.get((int) id));
 	}
-	
+
 	/**
-	 * @param id 
-	 * 
+	 * @param id
+	 *
 	 */
 	private void deleteFile(long id) {
-		
+
 		try {
 			boolean isDeleted = files.get((int) id).delete();
 			if (isDeleted) {
-				
+
 				files.remove((int) id);
 				adapter.notifyDataSetChanged();
 			}
@@ -451,19 +481,13 @@ public class MainActivity extends PermissionActivity
 	}
 
 	@Override
-	protected void onPermissionGranted(boolean isGranted) {
-		canAccessStorage = isGranted;
-		readCapturedFiles();
-	}
-
-	@Override
     public void onCreate(Bundle savedInstanceState) {
 
 		AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        
+
         adapter = new ArrayAdapter<>(
 			this,
 			android.R.layout.simple_list_item_1,
@@ -476,18 +500,17 @@ public class MainActivity extends PermissionActivity
         signaturesFolder = getSignaturesFolder();
         setButtonListener();
         registerForContextMenu(listView);
-        
+
         if (! isCaptureLibraryInstalled()) {
         	displayInstallLibraryDialog();
 		}
-        
+
         preferencesHandler = new PreferencesHandler(MainActivity.this);
     }
-    
+
 	@Override
 	public void onResume() {
 		super.onResume();
-		
 		readCapturedFiles();
 	}
 
@@ -499,15 +522,15 @@ public class MainActivity extends PermissionActivity
 			ContextMenuInfo menuInfo
 		) {
 		super.onCreateContextMenu(menu, view, menuInfo);
-		
+
 		MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.context_menu, menu);
 	}
-	
+
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
-		
-		AdapterContextMenuInfo info = 
+
+		AdapterContextMenuInfo info =
 			(AdapterContextMenuInfo) item.getMenuInfo();
 
 		int id = item.getItemId();
@@ -531,7 +554,7 @@ public class MainActivity extends PermissionActivity
 			return super.onContextItemSelected(item);
 		}
 	}
-	
+
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 
@@ -542,34 +565,53 @@ public class MainActivity extends PermissionActivity
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		
+
 	 	if (item.getItemId() == R.id.menuItemSettings) {
         	startActivity(new Intent(this, PreferenceActivity.class));
         	return true;
 	    } else {
 			return super.onOptionsItemSelected(item);
 		}
-	}	
+	}
 
 	@Override
-	public void onActivityResult(int requestCode, int resultCode, Intent data) {
-		super.onActivityResult(requestCode, resultCode, data);
-		
-		if (requestCode == CAPTURE_REQUEST_CODE) {
-			if (resultCode != RESULT_OK) {
-				if (data != null) {
-					
-					String errorMessage = data.getStringExtra("biz.binarysolutions.signature.ErrorMessage");
-					if (errorMessage != null) {
-						displayErrorMessage(errorMessage);
-					}
-				}
+	public void onActivityResult(int request, int result, Intent intent) {
+		super.onActivityResult(request, result, intent);
+
+		if (request != CAPTURE_REQUEST_CODE) {
+			return;
+		}
+		if (intent == null) {
+			return;
+		}
+
+		if (result == RESULT_OK) {
+			try {
+				Uri uri = intent.getData();
+				FileDescriptor descriptor =
+					getContentResolver().openFileDescriptor(uri, "r")
+						.getFileDescriptor();
+
+				FileInputStream input = new FileInputStream(descriptor);
+				Path            path  = Paths.get(signaturesFolder, fileName);
+
+				Files.copy(input, path, StandardCopyOption.REPLACE_EXISTING);
+				input.close();
+
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} else {
+
+			String errorMessage = intent.getStringExtra("biz.binarysolutions.signature.ErrorMessage");
+			if (errorMessage != null) {
+				displayErrorMessage(errorMessage);
 			}
 		}
 	}
 
 	/**
-	 * 
+	 *
 	 * @param readFiles
 	 */
 	public void onCapturedFilesAvailable(File[] readFiles) {
