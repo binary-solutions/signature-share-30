@@ -304,31 +304,29 @@ public class MainActivity extends AppCompatActivity
 				Intent intent =
 		        	new Intent("biz.binarysolutions.signature.CAPTURE");
 
-				String keyCode        = "biz.binarysolutions.signature.ActivationCode";
-				String keyFileName    = "biz.binarysolutions.signature.FileName";
-				String keyTitle       = "biz.binarysolutions.signature.Title";
-				String keyStrokeWidth = "biz.binarysolutions.signature.StrokeWidth";
-				String keyStrokeColor = "biz.binarysolutions.signature.StrokeColor";
-				String keyCrop        = "biz.binarysolutions.signature.Crop";
-				String keyWidth       = "biz.binarysolutions.signature.Width";
-				String keyHeight      = "biz.binarysolutions.signature.Height";
-				String keyBackgroundColor =
-					"biz.binarysolutions.signature.BackgroundColor";
-				String keyBackgroundImage =
-					"biz.binarysolutions.signature.BackgroundImage";
+				String keyCode            = "biz.binarysolutions.signature.ActivationCode";
+				String keyFileName        = "biz.binarysolutions.signature.FileName";
+				String keyTitle           = "biz.binarysolutions.signature.Title";
+				String keyStrokeWidth     = "biz.binarysolutions.signature.StrokeWidth";
+				String keyStrokeColor     = "biz.binarysolutions.signature.StrokeColor";
+				String keyCrop            = "biz.binarysolutions.signature.Crop";
+				String keyWidth           = "biz.binarysolutions.signature.Width";
+				String keyHeight          = "biz.binarysolutions.signature.Height";
+				String keyBackgroundColor = "biz.binarysolutions.signature.BackgroundColor";
+				String keyBackgroundImage = "biz.binarysolutions.signature.BackgroundImage";
+				String keySaveToCache     = "biz.binarysolutions.signature.SaveToCache";
 
 				fileName = getFileName();
 
-				String  title       = preferencesHandler.getTitle();
-				int     strokeWidth = preferencesHandler.getStrokeWidth();
-				String  strokeColor = preferencesHandler.getStrokeColor();
-				boolean crop        = preferencesHandler.getCrop();
-				String  width       = preferencesHandler.getWidth();
-				String  height      = preferencesHandler.getHeight();
-				String  backgroundColor =
-					preferencesHandler.getBackgroundColor();
-				String  backgroundImage =
-					preferencesHandler.getBackgroundImage();
+				String  title           = preferencesHandler.getTitle();
+				int     strokeWidth     = preferencesHandler.getStrokeWidth();
+				String  strokeColor     = preferencesHandler.getStrokeColor();
+				boolean crop            = preferencesHandler.getCrop();
+				String  width           = preferencesHandler.getWidth();
+				String  height          = preferencesHandler.getHeight();
+				String  backgroundColor = preferencesHandler.getBackgroundColor();
+				String  backgroundImage = preferencesHandler.getBackgroundImage();
+				boolean saveToCache     = true;
 
 
 		        intent.putExtra(keyCode, "");
@@ -341,6 +339,7 @@ public class MainActivity extends AppCompatActivity
 		        intent.putExtra(keyHeight, height);
 		        intent.putExtra(keyBackgroundColor, backgroundColor);
 		        intent.putExtra(keyBackgroundImage, backgroundImage);
+				intent.putExtra(keySaveToCache, saveToCache);
 
 		        intent.setComponent(
 		    		new ComponentName(
