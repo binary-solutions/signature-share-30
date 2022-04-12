@@ -314,7 +314,7 @@ public class MainActivity extends AppCompatActivity
 				String keyHeight          = "biz.binarysolutions.signature.Height";
 				String keyBackgroundColor = "biz.binarysolutions.signature.BackgroundColor";
 				String keyBackgroundImage = "biz.binarysolutions.signature.BackgroundImage";
-				String keySaveToCache     = "biz.binarysolutions.signature.SaveToCache";
+				String keyKeepSignature   = "biz.binarysolutions.signature.KeepSignature";
 
 				fileName = getFileName();
 
@@ -326,7 +326,7 @@ public class MainActivity extends AppCompatActivity
 				String  height          = preferencesHandler.getHeight();
 				String  backgroundColor = preferencesHandler.getBackgroundColor();
 				String  backgroundImage = preferencesHandler.getBackgroundImage();
-				boolean saveToCache     = true;
+				boolean keepSignature   = true;
 
 
 		        intent.putExtra(keyCode, "");
@@ -339,7 +339,7 @@ public class MainActivity extends AppCompatActivity
 		        intent.putExtra(keyHeight, height);
 		        intent.putExtra(keyBackgroundColor, backgroundColor);
 		        intent.putExtra(keyBackgroundImage, backgroundImage);
-				intent.putExtra(keySaveToCache, saveToCache);
+				intent.putExtra(keyKeepSignature, keepSignature);
 
 		        intent.setComponent(
 		    		new ComponentName(
